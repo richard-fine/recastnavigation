@@ -48,6 +48,7 @@ enum SamplePolyAreas
 	SAMPLE_POLYAREA_DOOR,
 	SAMPLE_POLYAREA_GRASS,
 	SAMPLE_POLYAREA_JUMP,
+	SAMPLE_POLYAREA_CRAWL
 };
 enum SamplePolyFlags
 {
@@ -55,7 +56,8 @@ enum SamplePolyFlags
 	SAMPLE_POLYFLAGS_SWIM		= 0x02,		// Ability to swim (water).
 	SAMPLE_POLYFLAGS_DOOR		= 0x04,		// Ability to move through doors.
 	SAMPLE_POLYFLAGS_JUMP		= 0x08,		// Ability to jump.
-	SAMPLE_POLYFLAGS_DISABLED	= 0x10,		// Disabled polygon
+	SAMPLE_POLYFLAGS_CRAWL		= 0x10,		// Ability to crawl
+	SAMPLE_POLYFLAGS_DISABLED	= 0x20,		// Disabled polygon
 	SAMPLE_POLYFLAGS_ALL		= 0xffff	// All abilities.
 };
 
@@ -103,6 +105,7 @@ protected:
 	float m_cellSize;
 	float m_cellHeight;
 	float m_agentHeight;
+	float m_crawlHeight;
 	float m_agentRadius;
 	float m_agentMaxClimb;
 	float m_agentMaxSlope;
