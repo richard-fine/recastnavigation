@@ -67,6 +67,34 @@ inline unsigned int ilog2(unsigned int v)
 	return r;
 }
 
+void rcFilterCrawlableSpans(rcContext* ctx, int walkableHeight, int crawlableHeight, rcHeightfield& solid)
+{
+	ctx->startTimer(RC_TIMER_FILTER_WALKABLE);
+	
+	const int w = solid.width;
+	const int h = solid.height;
+	const int MAX_HEIGHT = 0xffff;
+	
+	// Remove walkable flag from spans which do not have enough
+	// space above them for the agent to stand there.
+	for (int y = 0; y < h; ++y)
+	{
+		for (int x = 0; x < w; ++x)
+		{
+			for (rcSpan* s = solid.spans[x + y*w]; s; s = s->next)
+			{
+				const int bot = (int)(s->smax);
+				const int top = s->next ? (int)(s->next->smin) : MAX_HEIGHT;
+				int height = top - bot;
+				if (height <= walkableHeight && height >= crawlableHeight)
+					s->area = SAMPLE_POLYAREA_CRAWL;
+			}
+		}
+	}
+	
+	ctx->stopTimer(RC_TIMER_FILTER_WALKABLE);
+}
+
 class NavMeshTileTool : public SampleTool
 {
 	Sample_TileMesh* m_sample;
@@ -932,6 +960,8 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	m_cfg.height = m_cfg.tileSize + m_cfg.borderSize*2;
 	m_cfg.detailSampleDist = m_detailSampleDist < 0.9f ? 0 : m_cellSize * m_detailSampleDist;
 	m_cfg.detailSampleMaxError = m_cellHeight * m_detailSampleMaxError;
+
+	int crawlableHeight = (int)ceilf(m_crawlHeight / m_cfg.ch);
 	
 	// Expand the heighfield bounding box by border size to find the extents of geometry we need to build this tile.
 	//
@@ -1033,6 +1063,8 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	rcFilterLowHangingWalkableObstacles(m_ctx, m_cfg.walkableClimb, *m_solid);
 	rcFilterLedgeSpans(m_ctx, m_cfg.walkableHeight, m_cfg.walkableClimb, *m_solid);
 	rcFilterWalkableLowHeightSpans(m_ctx, m_cfg.walkableHeight, *m_solid);
+
+	rcFilterCrawlableSpans(m_ctx, m_cfg.walkableHeight, crawlableHeight, *m_solid);
 	
 	// Compact the heightfield so that it is faster to handle from now on.
 	// This will result more cache coherent data as well as the neighbours
@@ -1043,7 +1075,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'chf'.");
 		return 0;
 	}
-	if (!rcBuildCompactHeightfield(m_ctx, m_cfg.walkableHeight, m_cfg.walkableClimb, *m_solid, *m_chf))
+	if (!rcBuildCompactHeightfield(m_ctx, crawlableHeight, m_cfg.walkableClimb, *m_solid, *m_chf))
 	{
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build compact data.");
 		return 0;
@@ -1206,7 +1238,11 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_GRASS ||
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_ROAD)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK;
+				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_CRAWL;
+			}
+			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_CRAWL)
+			{
+				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_CRAWL;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_WATER)
 			{
@@ -1214,7 +1250,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DOOR)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR;
+				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR | SAMPLE_POLYFLAGS_CRAWL;
 			}
 		}
 		
