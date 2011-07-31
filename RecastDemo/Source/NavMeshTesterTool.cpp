@@ -261,6 +261,7 @@ void NavMeshTesterTool::init(Sample* sample)
 		m_filter.setAreaCost(SAMPLE_POLYAREA_DOOR, 1.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_GRASS, 2.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_JUMP, 1.5f);
+		m_filter.setAreaCost(SAMPLE_POLYAREA_CRAWL, 1.5f);
 	}
 	
 	m_neighbourhoodRadius = sample->getAgentRadius() * 20.0f;
@@ -432,6 +433,11 @@ void NavMeshTesterTool::handleMenu()
 		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ SAMPLE_POLYFLAGS_JUMP);
 		recalc();
 	}
+	if (imguiCheck("Crawl", (m_filter.getIncludeFlags() & SAMPLE_POLYFLAGS_CRAWL) != 0))
+	{
+		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ SAMPLE_POLYFLAGS_CRAWL);
+		recalc();
+	}
 	imguiUnindent();
 
 	imguiSeparator();
@@ -456,6 +462,11 @@ void NavMeshTesterTool::handleMenu()
 	if (imguiCheck("Jump", (m_filter.getExcludeFlags() & SAMPLE_POLYFLAGS_JUMP) != 0))
 	{
 		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ SAMPLE_POLYFLAGS_JUMP);
+		recalc();
+	}
+	if (imguiCheck("Crawl", (m_filter.getExcludeFlags() & SAMPLE_POLYFLAGS_CRAWL) != 0))
+	{
+		m_filter.setIncludeFlags(m_filter.getExcludeFlags() ^ SAMPLE_POLYFLAGS_CRAWL);
 		recalc();
 	}
 	imguiUnindent();
