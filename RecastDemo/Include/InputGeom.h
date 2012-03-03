@@ -95,6 +95,8 @@ public:
 						 const float minh, const float maxh, unsigned char area);
 	void deleteConvexVolume(int i);
 	void drawConvexVolumes(struct duDebugDraw* dd, bool hilight = false);
+
+	void loadConvexVolumesFromFile(const char* filepath);
 	///@}
 };
 

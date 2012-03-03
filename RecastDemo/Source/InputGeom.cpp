@@ -18,6 +18,7 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -155,6 +156,17 @@ bool InputGeom::loadMesh(rcContext* ctx, const char* filepath)
 		ctx->log(RC_LOG_ERROR, "buildTiledNavigation: Failed to build chunky mesh.");
 		return false;
 	}		
+
+	char volumeFileName[4096];
+	strcpy(volumeFileName, filepath);
+	strcat(volumeFileName, ".volumes.txt");
+
+	FILE* vfp = fopen(volumeFileName, "r");
+	if(vfp != NULL)
+	{
+		fclose(vfp);
+		loadConvexVolumesFromFile(volumeFileName);
+	}
 
 	return true;
 }
@@ -514,4 +526,30 @@ void InputGeom::drawConvexVolumes(struct duDebugDraw* dd, bool /*hilight*/)
 	
 	
 	dd->depthMask(true);
+}
+
+void InputGeom::loadConvexVolumesFromFile(const char* filePath)
+{
+	FILE* fp = fopen(filePath, "r");
+
+	char buf[4096];
+	while(fgets(buf, 4096, fp) != NULL)
+	{
+		ConvexVolume* vol = &m_volumes[m_volumeCount++];
+		memset(vol, 0, sizeof(ConvexVolume));
+
+		char* token = strtok(buf, ",");
+		vol->area = (unsigned char)(atoi(token) & 0xFF);
+		token = strtok(NULL, ",");
+		vol->hmin = (float)atof(token);
+		token = strtok(NULL, ",");
+		vol->hmax = (float)atof(token);
+
+		while((token = strtok(NULL, ",")) != NULL)
+			vol->verts[vol->nverts++] = (float)atof(token);
+
+		vol->nverts /= 3;
+	}
+
+	fclose(fp);
 }
