@@ -259,6 +259,26 @@ void NavMeshPruneTool::handleMenu()
 		delete m_flags;
 		m_flags = 0;
 	}
+
+	if(imguiButton("Flag selected accessible"))
+	{
+		for (int i = 0; i < nav->getMaxTiles(); ++i)
+	{
+		const dtMeshTile* tile = ((const dtNavMesh*)nav)->getTile(i);
+		if (!tile->header) continue;
+		const dtPolyRef base = nav->getPolyRefBase(tile);
+		for (int j = 0; j < tile->header->polyCount; ++j)
+		{
+			const dtPolyRef ref = base | (unsigned int)j;
+			if (m_flags->getFlags(ref))
+			{
+				unsigned short f = 0;
+				nav->getPolyFlags(ref, &f);
+				nav->setPolyFlags(ref, f | SAMPLE_POLYFLAGS_ACCESSIBLE);
+			}
+		}
+	}
+	}
 }
 
 void NavMeshPruneTool::handleClick(const float* s, const float* p, bool shift)
