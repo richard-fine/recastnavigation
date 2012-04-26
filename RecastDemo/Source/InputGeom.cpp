@@ -29,6 +29,7 @@
 #include "DebugDraw.h"
 #include "RecastDebugDraw.h"
 #include "DetourNavMesh.h"
+#include "Sample.h"
 
 static bool intersectSegmentTriangle(const float* sp, const float* sq,
 									 const float* a, const float* b, const float* c,
@@ -167,6 +168,17 @@ bool InputGeom::loadMesh(rcContext* ctx, const char* filepath)
 		fclose(vfp);
 		loadConvexVolumesFromFile(volumeFileName);
 	}
+    
+    char linkFileName[4096];
+    strcpy(linkFileName, filepath);
+    strcat(linkFileName, ".jumplinks.txt");
+    
+    FILE* lfp = fopen(linkFileName, "r");
+    if(lfp != NULL)
+    {
+        fclose(lfp);
+        loadJumpLinksFromFile(linkFileName);
+    }
 
 	return true;
 }
@@ -552,4 +564,32 @@ void InputGeom::loadConvexVolumesFromFile(const char* filePath)
 	}
 
 	fclose(fp);
+}
+
+void InputGeom::loadJumpLinksFromFile(const char* filePath)
+{
+    FILE* fp = fopen(filePath, "r");
+    
+    char buf[4096];
+    while(fgets(buf, 4096, fp) != NULL)
+    {
+        float start[3], end[3];
+        char* token = strtok(buf, ",");
+        start[0] = (float)atof(token);
+        token = strtok(NULL, ",");
+        start[1] = (float)atof(token);
+        token = strtok(NULL, ",");
+        start[2] = (float)atof(token);
+        
+        token = strtok(NULL, ",");
+        end[0] = (float)atof(token);
+        token = strtok(NULL, ",");
+        end[1] = (float)atof(token);
+        token = strtok(NULL, ",");
+        end[2] = (float)atof(token);
+    
+        addOffMeshConnection(start, end, 0.5, 0, SAMPLE_POLYAREA_JUMP, SAMPLE_POLYFLAGS_JUMP);
+    }
+    
+    fclose(fp);
 }

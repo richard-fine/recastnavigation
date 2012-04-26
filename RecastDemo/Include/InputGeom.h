@@ -85,6 +85,7 @@ public:
 							  unsigned char bidir, unsigned char area, unsigned short flags);
 	void deleteOffMeshConnection(int i);
 	void drawOffMeshConnections(struct duDebugDraw* dd, bool hilight = false);
+    void loadJumpLinksFromFile(const char* filepath);
 	///@}
 
 	/// @name Box Volumes.
