@@ -193,6 +193,10 @@ static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, u
 				continue;
 			// Mark as visited
 			flags->setFlags(neiRef, flag);
+			// Don't explore jump links
+			unsigned char area;
+			nav->getPolyArea(neiRef, &area);
+			if(area == SAMPLE_POLYAREA_JUMP) continue;
 			// Visit neighbours
 			openList.push(neiRef);
 		}
