@@ -348,7 +348,7 @@ void NavMeshPruneTool::handleMenu()
 			{
 				unsigned short f = 0;
 				nav->getPolyFlags(ref, &f);
-				nav->setPolyFlags(ref, f | SAMPLE_POLYFLAGS_ACCESSIBLE);
+				nav->setPolyFlags(ref, f | SAMPLE_POLYFLAGS_SKYVISIBLE);
 			}
 		}
 	}
