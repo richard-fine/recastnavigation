@@ -181,8 +181,8 @@ public:
 static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, unsigned char flag)
 {
 	// If already visited, skip.
-	if (flags->getFlags(start))
-		return;
+	/*if (flags->getFlags(start))
+		return;*/
 		
 	PolyRefArray openList;
 	openList.push(start);
@@ -225,7 +225,7 @@ static void floodFromSelected(dtNavMesh* nav, NavmeshFlags* flags)
 		for (int j = 0; j < tile->header->polyCount; ++j)
 		{
 			const dtPolyRef ref = base | (unsigned int)j;
-			if (flags->getFlags(ref)) continue;
+			if (!flags->getFlags(ref)) continue;
 
 			floodNavmesh(nav, flags, ref, 1);
 		}

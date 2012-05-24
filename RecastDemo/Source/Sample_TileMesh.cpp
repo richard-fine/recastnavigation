@@ -67,34 +67,49 @@ inline unsigned int ilog2(unsigned int v)
 	return r;
 }
 
-void markSkyVisiblePolygons(rcCompactHeightfield& chf, rcPolyMesh& polyMesh)
+void collectSkyVisibleRegions(rcHeightfield& solid, rcCompactHeightfield& chf, bool* isSkyVisible)
 {
-	bool* isSkyVisible = new bool[chf.maxRegions];
 	memset(isSkyVisible, 0, sizeof(bool) * chf.maxRegions);
 
-	for(int iCell = 0; iCell < chf.width * chf.height; ++iCell)
+	for(int x = 0; x < solid.width; ++x)
 	{
-		if(chf.cells[iCell].count == 0) continue;
-
-		int topmostSpan = 0;
-		for(int span = 1; span < chf.cells[iCell].count; ++span)
+		for(int y = 0; y < solid.height; ++y)
 		{
-			if(chf.spans[chf.cells[iCell].index + span].y > chf.spans[chf.cells[iCell].index + topmostSpan].y)
-				topmostSpan = span;
+			if(!solid.spans[x + y * solid.width]) continue;
+			
+			// The last span in each cell is the topmost one
+			rcSpan* topmostSpan;
+			for(topmostSpan = solid.spans[x + y * solid.width]; topmostSpan->next; topmostSpan = topmostSpan->next)
+				;
+
+			const int skyY = (int)topmostSpan->smax;
+
+			// Find the corresponding span in the CHF
+			const rcCompactCell& chfCell(chf.cells[x + y*chf.width]);
+			for(int i = (int)chfCell.index, ni = (int)(chfCell.index + chfCell.count); i < ni; ++i)
+			{
+				const rcCompactSpan& s = chf.spans[i];
+				if((int)s.y == skyY)
+				{
+					if(s.reg > 0 && s.reg < chf.maxRegions)
+						isSkyVisible[s.reg] = true;
+					break;
+				}
+			}
 		}
-
-		int regionId = chf.spans[chf.cells[iCell].index + topmostSpan].reg;
-
-		isSkyVisible[regionId & ~RC_BORDER_REG] = true;
 	}
+}
 
+void markSkyVisibleRegions(rcPolyMesh& polyMesh, bool* isSkyVisible, int maxRegions)
+{
 	for(int iPoly = 0; iPoly < polyMesh.npolys; ++iPoly)
 	{
-		if(!isSkyVisible[polyMesh.regs[iPoly] & ~RC_BORDER_REG]) continue;
+		int regionId = polyMesh.regs[iPoly];
+		if(regionId == 0) continue;
+		if(regionId >= maxRegions) continue;
+		if(!isSkyVisible[regionId]) continue;
 		polyMesh.flags[iPoly] |= SAMPLE_POLYFLAGS_SKYVISIBLE;
 	}
-
-	delete[] isSkyVisible;
 }
 
 void rcFilterCrawlableSpans(rcContext* ctx, int walkableHeight, int crawlableHeight, rcHeightfield& solid)
@@ -1110,12 +1125,6 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build compact data.");
 		return 0;
 	}
-	
-	if (!m_keepInterResults)
-	{
-		rcFreeHeightField(m_solid);
-		m_solid = 0;
-	}
 
 	// Erode the walkable area by agent radius.
 	if (!rcErodeWalkableArea(m_ctx, m_cfg.walkableRadius, *m_chf))
@@ -1192,6 +1201,15 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		}
 	}
 	 	
+	bool* isSkyVisible = new bool[m_chf->maxRegions];
+	collectSkyVisibleRegions(*m_solid, *m_chf, isSkyVisible);
+	
+	if (!m_keepInterResults)
+	{
+		rcFreeHeightField(m_solid);
+		m_solid = 0;
+	}
+ 	
 	// Create contours.
 	m_cset = rcAllocContourSet();
 	if (!m_cset)
@@ -1224,7 +1242,8 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	}
 
 	// Mark sky-visible polygons, so we can easily flood-fill connectivity later
-	markSkyVisiblePolygons(*m_chf, *m_pmesh);
+	markSkyVisibleRegions(*m_pmesh, isSkyVisible, m_chf->maxRegions);
+	delete[] isSkyVisible;
 	
 	// Build detail mesh.
 	m_dmesh = rcAllocPolyMeshDetail();
