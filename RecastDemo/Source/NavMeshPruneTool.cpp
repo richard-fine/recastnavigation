@@ -273,6 +273,26 @@ static void disableUnvisitedPolys(dtNavMesh* nav, NavmeshFlags* flags)
 	}
 }
 
+static void unaccessibleUnvisitedPolys(dtNavMesh* nav, NavmeshFlags* flags)
+{
+	for (int i = 0; i < nav->getMaxTiles(); ++i)
+	{
+		const dtMeshTile* tile = ((const dtNavMesh*)nav)->getTile(i);
+		if (!tile->header) continue;
+		const dtPolyRef base = nav->getPolyRefBase(tile);
+		for (int j = 0; j < tile->header->polyCount; ++j)
+		{
+			const dtPolyRef ref = base | (unsigned int)j;
+			if (!flags->getFlags(ref))
+			{
+				unsigned short f = 0;
+				nav->getPolyFlags(ref, &f);
+				nav->setPolyFlags(ref, f & ~SAMPLE_POLYFLAGS_SKYVISIBLE);
+			}
+		}
+	}
+}
+
 NavMeshPruneTool::NavMeshPruneTool() :
 	m_flags(0),
 	m_hitPosSet(false)
@@ -330,6 +350,13 @@ void NavMeshPruneTool::handleMenu()
 	if (imguiButton("Prune Unselected"))
 	{
 		disableUnvisitedPolys(nav, m_flags);
+		delete m_flags;
+		m_flags = 0;
+	}
+
+	if(imguiButton("Unaccessible unselected"))
+	{
+		unaccessibleUnvisitedPolys(nav, m_flags);
 		delete m_flags;
 		m_flags = 0;
 	}

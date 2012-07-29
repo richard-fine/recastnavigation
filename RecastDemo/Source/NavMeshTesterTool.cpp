@@ -260,7 +260,7 @@ void NavMeshTesterTool::init(Sample* sample)
 		m_filter.setAreaCost(SAMPLE_POLYAREA_ROAD, 1.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_DOOR, 1.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_GRASS, 2.0f);
-		m_filter.setAreaCost(SAMPLE_POLYAREA_JUMP, 1.5f);
+		m_filter.setAreaCost(SAMPLE_POLYAREA_JUMP, 1.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_CRAWL, 1.5f);
 	}
 	
@@ -438,6 +438,16 @@ void NavMeshTesterTool::handleMenu()
 		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ SAMPLE_POLYFLAGS_CRAWL);
 		recalc();
 	}
+	if (imguiCheck("Skyvisible", (m_filter.getIncludeFlags() & SAMPLE_POLYFLAGS_SKYVISIBLE) != 0))
+	{
+		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ SAMPLE_POLYFLAGS_SKYVISIBLE);
+		recalc();
+	}
+	if (imguiCheck("Disabled", (m_filter.getIncludeFlags() & SAMPLE_POLYFLAGS_DISABLED) != 0))
+	{
+		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ SAMPLE_POLYFLAGS_DISABLED);
+		recalc();
+	}
 	imguiUnindent();
 
 	imguiSeparator();
@@ -466,7 +476,17 @@ void NavMeshTesterTool::handleMenu()
 	}
 	if (imguiCheck("Crawl", (m_filter.getExcludeFlags() & SAMPLE_POLYFLAGS_CRAWL) != 0))
 	{
-		m_filter.setIncludeFlags(m_filter.getExcludeFlags() ^ SAMPLE_POLYFLAGS_CRAWL);
+		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ SAMPLE_POLYFLAGS_CRAWL);
+		recalc();
+	}
+	if (imguiCheck("Skyvisible", (m_filter.getExcludeFlags() & SAMPLE_POLYFLAGS_SKYVISIBLE) != 0))
+	{
+		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ SAMPLE_POLYFLAGS_SKYVISIBLE);
+		recalc();
+	}
+	if (imguiCheck("Disabled", (m_filter.getExcludeFlags() & SAMPLE_POLYFLAGS_DISABLED) != 0))
+	{
+		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ SAMPLE_POLYFLAGS_DISABLED);
 		recalc();
 	}
 	imguiUnindent();
