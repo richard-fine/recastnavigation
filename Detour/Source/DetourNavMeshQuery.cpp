@@ -651,6 +651,11 @@ dtStatus dtNavMeshQuery::closestPointOnPolyBoundary(dtPolyRef ref, const float* 
 /// 
 dtStatus dtNavMeshQuery::getPolyHeight(dtPolyRef ref, const float* pos, float* height) const
 {
+	return getPolyHeight(ref, pos, 1e-04f, height);
+}
+
+dtStatus dtNavMeshQuery::getPolyHeight(dtPolyRef ref, const float* pos, float epsilon, float* height) const
+{
 	dtAssert(m_nav);
 
 	const dtMeshTile* tile = 0;

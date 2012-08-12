@@ -449,6 +449,7 @@ public:
 	///  @param[out]	height		The height at the surface of the polygon.
 	/// @returns The status flags for the query.
 	dtStatus getPolyHeight(dtPolyRef ref, const float* pos, float* height) const;
+	dtStatus getPolyHeight(dtPolyRef ref, const float* pos, float epsilon, float* height) const;
 
 	/// @}
 	/// @name Miscellaneous Functions

@@ -203,6 +203,15 @@ void dtCalcPolyCenter(float* tc, const unsigned short* idx, int nidx, const floa
 
 bool dtClosestHeightPointTriangle(const float* p, const float* a, const float* b, const float* c, float& h)
 {
+	static const float EPS = 1e-4f;
+	return dtClosestHeightPointTriangle(p, a, b, c, EPS, h);
+}
+
+// The (sloppy) epsilon is needed to allow to get height of points which
+// are interpolated along the edges of the triangles.
+
+bool dtClosestHeightPointTriangle(const float* p, const float* a, const float* b, const float* c, float epsilon, float& h)
+{
 	float v0[3], v1[3], v2[3];
 	dtVsub(v0, c,a);
 	dtVsub(v1, b,a);
@@ -219,12 +228,8 @@ bool dtClosestHeightPointTriangle(const float* p, const float* a, const float* b
 	const float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
 	const float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
-	// The (sloppy) epsilon is needed to allow to get height of points which
-	// are interpolated along the edges of the triangles.
-	static const float EPS = 1e-4f;
-	
 	// If point lies inside the triangle, return interpolated ycoord.
-	if (u >= -EPS && v >= -EPS && (u+v) <= 1+EPS)
+	if (u >= -epsilon && v >= -epsilon && (u+v) <= 1+epsilon)
 	{
 		h = a[1] + v0[1]*u + v1[1]*v;
 		return true;

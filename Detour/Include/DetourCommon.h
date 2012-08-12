@@ -372,6 +372,7 @@ void dtClosestPtPointTriangle(float* closest, const float* p,
 ///  @param[in]		c		Vertex C of triangle ABC. [(x, y, z)]
 ///  @param[out]	h		The resulting height.
 bool dtClosestHeightPointTriangle(const float* p, const float* a, const float* b, const float* c, float& h);
+bool dtClosestHeightPointTriangle(const float* p, const float* a, const float* b, const float* c, float epsilon, float& h);
 
 bool dtIntersectSegmentPoly2D(const float* p0, const float* p1,
 							  const float* verts, int nverts,
