@@ -918,12 +918,6 @@ void Sample_TileMesh::checkOffMeshLinkNeighborTileConnections()
         m_navMesh->calcTileLoc(sv, &sx, &sy);
         m_navMesh->calcTileLoc(ev, &ex, &ey);
         
-        if(sx == ex && sy == ey)
-        {
-            m_ctx->log(RC_LOG_ERROR, "Off-mesh link %i goes to its own tile", i);
-            continue;
-        }
-        
         if(sx < ex - 1 || sx > ex + 1 || sy < ey - 1 || sy > ey + 1)
         {
             m_ctx->log(RC_LOG_ERROR, "Off-mesh link %i goes to a tile too far away", i);
