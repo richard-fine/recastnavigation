@@ -901,6 +901,37 @@ void Sample_TileMesh::removeTile(const float* pos)
 	m_navMesh->removeTile(m_navMesh->getTileRefAt(tx,ty,0),0,0);
 }
 
+void Sample_TileMesh::checkOffMeshLinkNeighborTileConnections()
+{
+    if(!m_geom) return;
+    if(!m_navMesh) return;
+    
+    int numConnections = m_geom->getOffMeshConnectionCount();
+    const float* connectionVerts = m_geom->getOffMeshConnectionVerts();
+    
+    for(int i = 0; i < numConnections; ++i)
+    {
+        const float* sv = &connectionVerts[i * 3 * 2];
+        const float* ev = &connectionVerts[i * 3 * 2 + 3];
+        
+        int sx, sy, ex, ey;
+        m_navMesh->calcTileLoc(sv, &sx, &sy);
+        m_navMesh->calcTileLoc(ev, &ex, &ey);
+        
+        if(sx == ex && sy == ey)
+        {
+            m_ctx->log(RC_LOG_ERROR, "Off-mesh link %i goes to its own tile", i);
+            continue;
+        }
+        
+        if(sx < ex - 1 || sx > ex + 1 || sy < ey - 1 || sy > ey + 1)
+        {
+            m_ctx->log(RC_LOG_ERROR, "Off-mesh link %i goes to a tile too far away", i);
+            continue;
+        }
+    }
+}
+
 void Sample_TileMesh::buildAllTiles()
 {
 	if (!m_geom) return;
@@ -915,6 +946,7 @@ void Sample_TileMesh::buildAllTiles()
 	const int th = (gh + ts-1) / ts;
 	const float tcs = m_tileSize*m_cellSize;
 
+    checkOffMeshLinkNeighborTileConnections();
 	
 	// Start the build process.
 	m_ctx->startTimer(RC_TIMER_TEMP);

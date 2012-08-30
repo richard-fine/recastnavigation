@@ -81,6 +81,8 @@ protected:
 	
 	void saveAll(const char* path, const dtNavMesh* mesh);
 	dtNavMesh* loadAll(const char* path);
+    
+    void checkOffMeshLinkNeighborTileConnections();
 	
 public:
 	Sample_TileMesh();
