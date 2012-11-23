@@ -31,6 +31,9 @@ class NavMeshPruneTool : public SampleTool
 
 	float m_hitPos[3];
 	bool m_hitPosSet;
+
+	unsigned short m_floodIncludingFlags;
+	unsigned short m_floodExcludingFlags;
 	
 public:
 	NavMeshPruneTool();

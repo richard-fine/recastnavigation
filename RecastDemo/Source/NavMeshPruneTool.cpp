@@ -178,7 +178,7 @@ public:
 	}
 };
 
-static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, unsigned char flag)
+static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, unsigned char flag, unsigned short includingFlags, unsigned short excludingFlags)
 {
 	// If already visited, skip.
 	/*if (flags->getFlags(start))
@@ -203,9 +203,16 @@ static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, u
 			// Skip invalid and already visited.
 			if (!neiRef || flags->getFlags(neiRef))
 				continue;
+
+			unsigned short polyFlags;
+			nav->getPolyFlags(neiRef, &polyFlags);
+			if((polyFlags & includingFlags) == 0) continue;
+			if((polyFlags & excludingFlags) != 0) continue;
+
 			// Mark as visited
 			flags->setFlags(neiRef, flag);
 			// Don't explore jump links
+			
 			unsigned char area;
 			nav->getPolyArea(neiRef, &area);
 			if(area == SAMPLE_POLYAREA_JUMP) continue;
@@ -215,7 +222,7 @@ static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, u
 	}
 }
 
-static void floodFromSelected(dtNavMesh* nav, NavmeshFlags* flags)
+static void floodFromSelected(dtNavMesh* nav, NavmeshFlags* flags, unsigned short includingFlags, unsigned short excludingFlags)
 {
 	for(int i = 0; i < nav->getMaxTiles(); ++i)
 	{
@@ -227,7 +234,7 @@ static void floodFromSelected(dtNavMesh* nav, NavmeshFlags* flags)
 			const dtPolyRef ref = base | (unsigned int)j;
 			if (!flags->getFlags(ref)) continue;
 
-			floodNavmesh(nav, flags, ref, 1);
+			floodNavmesh(nav, flags, ref, 1, includingFlags, excludingFlags);
 		}
 	}
 }
@@ -264,6 +271,26 @@ static void disableUnvisitedPolys(dtNavMesh* nav, NavmeshFlags* flags)
 		{
 			const dtPolyRef ref = base | (unsigned int)j;
 			if (!flags->getFlags(ref))
+			{
+				unsigned short f = 0;
+				nav->getPolyFlags(ref, &f);
+				nav->setPolyFlags(ref, f | SAMPLE_POLYFLAGS_DISABLED);
+			}
+		}
+	}
+}
+
+static void disableVisitedPolys(dtNavMesh* nav, NavmeshFlags* flags)
+{
+	for (int i = 0; i < nav->getMaxTiles(); ++i)
+	{
+		const dtMeshTile* tile = ((const dtNavMesh*)nav)->getTile(i);
+		if (!tile->header) continue;
+		const dtPolyRef base = nav->getPolyRefBase(tile);
+		for (int j = 0; j < tile->header->polyCount; ++j)
+		{
+			const dtPolyRef ref = base | (unsigned int)j;
+			if (flags->getFlags(ref))
 			{
 				unsigned short f = 0;
 				nav->getPolyFlags(ref, &f);
@@ -321,6 +348,72 @@ void NavMeshPruneTool::handleMenu()
 	dtNavMesh* nav = m_sample->getNavMesh();
 	if (!nav) return;
 
+	imguiLabel("Flood Including Flags");
+
+	imguiIndent();
+	if (imguiCheck("Walk", (m_floodIncludingFlags & SAMPLE_POLYFLAGS_WALK) != 0))
+	{
+		m_floodIncludingFlags ^= SAMPLE_POLYFLAGS_WALK;
+	}
+	if (imguiCheck("Swim", (m_floodIncludingFlags & SAMPLE_POLYFLAGS_SWIM) != 0))
+	{
+		m_floodIncludingFlags ^= SAMPLE_POLYFLAGS_SWIM;
+	}
+	if (imguiCheck("Door", (m_floodIncludingFlags & SAMPLE_POLYFLAGS_DOOR) != 0))
+	{
+		m_floodIncludingFlags ^= SAMPLE_POLYFLAGS_DOOR;
+	}
+	if (imguiCheck("Jump", (m_floodIncludingFlags & SAMPLE_POLYFLAGS_JUMP) != 0))
+	{
+		m_floodIncludingFlags ^= SAMPLE_POLYFLAGS_JUMP;
+	}
+	if (imguiCheck("Crawl", (m_floodIncludingFlags & SAMPLE_POLYFLAGS_CRAWL) != 0))
+	{
+		m_floodIncludingFlags ^= SAMPLE_POLYFLAGS_CRAWL;
+	}
+	if (imguiCheck("Skyvisible", (m_floodIncludingFlags & SAMPLE_POLYFLAGS_SKYVISIBLE) != 0))
+	{
+		m_floodIncludingFlags ^= SAMPLE_POLYFLAGS_SKYVISIBLE;
+	}
+	if (imguiCheck("Disabled", (m_floodIncludingFlags & SAMPLE_POLYFLAGS_DISABLED) != 0))
+	{
+		m_floodIncludingFlags ^= SAMPLE_POLYFLAGS_DISABLED;
+	}
+	imguiUnindent();
+
+	imguiLabel("Flood Excluding Flags");
+
+	imguiIndent();
+	if (imguiCheck("Walk", (m_floodExcludingFlags & SAMPLE_POLYFLAGS_WALK) != 0))
+	{
+		m_floodExcludingFlags ^= SAMPLE_POLYFLAGS_WALK;
+	}
+	if (imguiCheck("Swim", (m_floodExcludingFlags & SAMPLE_POLYFLAGS_SWIM) != 0))
+	{
+		m_floodExcludingFlags ^= SAMPLE_POLYFLAGS_SWIM;
+	}
+	if (imguiCheck("Door", (m_floodExcludingFlags & SAMPLE_POLYFLAGS_DOOR) != 0))
+	{
+		m_floodExcludingFlags ^= SAMPLE_POLYFLAGS_DOOR;
+	}
+	if (imguiCheck("Jump", (m_floodExcludingFlags & SAMPLE_POLYFLAGS_JUMP) != 0))
+	{
+		m_floodExcludingFlags ^= SAMPLE_POLYFLAGS_JUMP;
+	}
+	if (imguiCheck("Crawl", (m_floodExcludingFlags & SAMPLE_POLYFLAGS_CRAWL) != 0))
+	{
+		m_floodExcludingFlags ^= SAMPLE_POLYFLAGS_CRAWL;
+	}
+	if (imguiCheck("Skyvisible", (m_floodExcludingFlags & SAMPLE_POLYFLAGS_SKYVISIBLE) != 0))
+	{
+		m_floodExcludingFlags ^= SAMPLE_POLYFLAGS_SKYVISIBLE;
+	}
+	if (imguiCheck("Disabled", (m_floodExcludingFlags & SAMPLE_POLYFLAGS_DISABLED) != 0))
+	{
+		m_floodExcludingFlags ^= SAMPLE_POLYFLAGS_DISABLED;
+	}
+	imguiUnindent();
+
 	if(imguiButton("Select sky-accessible polygons"))
 	{
 		if(!m_flags)
@@ -339,7 +432,7 @@ void NavMeshPruneTool::handleMenu()
 
 	if (imguiButton("Flood fill from selected"))
 	{
-		floodFromSelected(nav, m_flags);
+		floodFromSelected(nav, m_flags, m_floodIncludingFlags, m_floodExcludingFlags);
 	}
 
 	if (imguiButton("Clear Selection"))
@@ -350,6 +443,13 @@ void NavMeshPruneTool::handleMenu()
 	if (imguiButton("Prune Unselected"))
 	{
 		disableUnvisitedPolys(nav, m_flags);
+		delete m_flags;
+		m_flags = 0;
+	}
+
+	if (imguiButton("Prune Selected"))
+	{
+		disableVisitedPolys(nav, m_flags);
 		delete m_flags;
 		m_flags = 0;
 	}
@@ -411,7 +511,7 @@ void NavMeshPruneTool::handleClick(const float* s, const float* p, bool shift)
 	dtPolyRef ref = 0;
 	query->findNearestPoly(p, ext, &filter, &ref, 0);
 
-	floodNavmesh(nav, m_flags, ref, 1);
+	floodNavmesh(nav, m_flags, ref, 1, m_floodIncludingFlags, m_floodExcludingFlags);
 }
 
 void NavMeshPruneTool::handleToggle()
