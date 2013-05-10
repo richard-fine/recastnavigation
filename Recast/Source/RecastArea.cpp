@@ -26,33 +26,11 @@
 #include "RecastAlloc.h"
 #include "RecastAssert.h"
 
-/// @par 
-/// 
-/// Basically, any spans that are closer to a boundary or obstruction than the specified radius 
-/// are marked as unwalkable.
-///
-/// This method is usually called immediately after the heightfield has been built.
-///
-/// @see rcCompactHeightfield, rcBuildCompactHeightfield, rcConfig::walkableRadius
-bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf)
+static void MarkDistanceFieldBoundaries(unsigned char* dist, rcCompactHeightfield& chf, unsigned char areaFlag)
 {
-	rcAssert(ctx);
-	
 	const int w = chf.width;
 	const int h = chf.height;
-	
-	ctx->startTimer(RC_TIMER_ERODE_AREA);
-	
-	unsigned char* dist = (unsigned char*)rcAlloc(sizeof(unsigned char)*chf.spanCount, RC_ALLOC_TEMP);
-	if (!dist)
-	{
-		ctx->log(RC_LOG_ERROR, "erodeWalkableArea: Out of memory 'dist' (%d).", chf.spanCount);
-		return false;
-	}
-	
-	// Init distance.
-	memset(dist, 0xff, sizeof(unsigned char)*chf.spanCount);
-	
+
 	// Mark boundary cells.
 	for (int y = 0; y < h; ++y)
 	{
@@ -61,7 +39,7 @@ bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf)
 			const rcCompactCell& c = chf.cells[x+y*w];
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
-				if (chf.areas[i] == RC_NULL_AREA)
+				if (chf.areas[i] == areaFlag)
 				{
 					dist[i] = 0;
 				}
@@ -76,7 +54,7 @@ bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf)
 							const int nx = x + rcGetDirOffsetX(dir);
 							const int ny = y + rcGetDirOffsetY(dir);
 							const int nidx = (int)chf.cells[nx+ny*w].index + rcGetCon(s, dir);
-							if (chf.areas[nidx] != RC_NULL_AREA)
+							if (chf.areas[nidx] != areaFlag)
 							{
 								nc++;
 							}
@@ -89,6 +67,12 @@ bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf)
 			}
 		}
 	}
+}
+
+static void PropagateDistanceField(unsigned char* dist, rcCompactHeightfield& chf)
+{
+	const int w = chf.width;
+	const int h = chf.height;
 	
 	unsigned char nd;
 	
@@ -207,13 +191,63 @@ bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf)
 			}
 		}
 	}
+}
+
+/// @par 
+/// 
+/// Basically, any spans that are closer to a boundary or obstruction than the specified radius 
+/// are marked as unwalkable.
+///
+/// This method is usually called immediately after the heightfield has been built.
+///
+/// @see rcCompactHeightfield, rcBuildCompactHeightfield, rcConfig::walkableRadius
+bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf, char crawlAreaFlag)
+{
+	rcAssert(ctx);
+	
+	ctx->startTimer(RC_TIMER_ERODE_AREA);
+	
+	unsigned char* dist = (unsigned char*)rcAlloc(sizeof(unsigned char)*chf.spanCount, RC_ALLOC_TEMP);
+	if (!dist)
+	{
+		ctx->log(RC_LOG_ERROR, "erodeWalkableArea: Out of memory 'dist' (%d).", chf.spanCount);
+		return false;
+	}
+
+	memset(dist, 0xff, sizeof(unsigned char)*chf.spanCount);
+
+	MarkDistanceFieldBoundaries(dist, chf, RC_NULL_AREA);
+	
+	unsigned char* crawlDist = (unsigned char*)rcAlloc(sizeof(unsigned char)*chf.spanCount, RC_ALLOC_TEMP);
+	if (!crawlDist)
+	{
+		ctx->log(RC_LOG_ERROR, "erodeWalkableArea: Out of memory 'crawlDist' (%d).", chf.spanCount);
+		return false;
+	}
+
+	memcpy(crawlDist, dist, sizeof(unsigned char)*chf.spanCount);
+
+	MarkDistanceFieldBoundaries(dist, chf, crawlAreaFlag);
+
+	PropagateDistanceField(dist, chf);
+	PropagateDistanceField(crawlDist, chf);
 	
 	const unsigned char thr = (unsigned char)(radius*2);
 	for (int i = 0; i < chf.spanCount; ++i)
+	{
 		if (dist[i] < thr)
-			chf.areas[i] = RC_NULL_AREA;
+		{
+			if(crawlDist[i] < thr)
+			{
+				chf.areas[i] = RC_NULL_AREA;
+			}
+			else
+				chf.areas[i] = crawlAreaFlag;
+		}
+	}
 	
 	rcFree(dist);
+	rcFree(crawlDist);
 	
 	ctx->stopTimer(RC_TIMER_ERODE_AREA);
 	

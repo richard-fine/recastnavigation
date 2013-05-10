@@ -375,7 +375,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 	}
 	
 	// Erode the walkable area by agent radius.
-	if (!rcErodeWalkableArea(ctx, tcfg.walkableRadius, *rc.chf))
+	if (!rcErodeWalkableArea(ctx, tcfg.walkableRadius, *rc.chf, SAMPLE_POLYAREA_CRAWL))
 	{
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Could not erode.");
 		return 0;

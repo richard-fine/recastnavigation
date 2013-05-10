@@ -936,7 +936,7 @@ bool rcBuildCompactHeightfield(rcContext* ctx, const int walkableHeight, const i
 ///  @param[in]		radius	The radius of erosion. [Limits: 0 < value < 255] [Units: vx]
 ///  @param[in,out]	chf		The populated compact heightfield to erode.
 ///  @returns True if the operation completed successfully.
-bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf);
+bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf, char crawlAreaFlag);
 
 /// Applies a median filter to walkable area types (based on area id), removing noise.
 ///  @ingroup recast
