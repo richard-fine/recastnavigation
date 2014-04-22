@@ -58,7 +58,7 @@ enum SamplePolyFlags
 	SAMPLE_POLYFLAGS_JUMP		= 0x08,		// Ability to jump.
 	SAMPLE_POLYFLAGS_CRAWL		= 0x10,		// Ability to crawl
 	SAMPLE_POLYFLAGS_DISABLED	= 0x20,		// Disabled polygon
-	SAMPLE_POLYFLAGS_ACCESSIBLE = 0x40,		// Polygon is generally accessible (doesn't need jumpers etc)
+	SAMPLE_POLYFLAGS_SKYVISIBLE = 0x40,		// "sky visible" - i.e formed from topmost span, is not inside something
 	SAMPLE_POLYFLAGS_ALL		= 0xffff	// All abilities.
 };
 

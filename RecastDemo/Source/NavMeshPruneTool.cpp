@@ -164,6 +164,18 @@ public:
 		m_tiles[it].flags[ip] = flags;
 	}
 	
+	inline int count(unsigned char flags)
+	{
+		int result = 0;
+		for (int i = 0; i < m_ntiles; ++i)
+		{
+			TileFlags* tf = &m_tiles[i];
+			if (!tf->nflags) continue;
+			for(int j = 0; j < tf->nflags; ++j)
+				if(tf->flags[j] & flags) ++result;
+		}
+		return result;
+	}
 };
 
 static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, unsigned char flag)
@@ -199,6 +211,44 @@ static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, u
 			if(area == SAMPLE_POLYAREA_JUMP) continue;
 			// Visit neighbours
 			openList.push(neiRef);
+		}
+	}
+}
+
+static void floodFromSelected(dtNavMesh* nav, NavmeshFlags* flags)
+{
+	for(int i = 0; i < nav->getMaxTiles(); ++i)
+	{
+		const dtMeshTile* tile = ((const dtNavMesh*)nav)->getTile(i);
+		if (!tile->header) continue;
+		const dtPolyRef base = nav->getPolyRefBase(tile);
+		for (int j = 0; j < tile->header->polyCount; ++j)
+		{
+			const dtPolyRef ref = base | (unsigned int)j;
+			if (flags->getFlags(ref)) continue;
+
+			floodNavmesh(nav, flags, ref, 1);
+		}
+	}
+}
+
+static void visitSkyAccessiblePolys(dtNavMesh* nav, NavmeshFlags* flags)
+{
+	for(int i = 0; i < nav->getMaxTiles(); ++i)
+	{
+		const dtMeshTile* tile = ((const dtNavMesh*)nav)->getTile(i);
+		if (!tile->header) continue;
+		const dtPolyRef base = nav->getPolyRefBase(tile);
+		for (int j = 0; j < tile->header->polyCount; ++j)
+		{
+			const dtPolyRef ref = base | (unsigned int)j;
+			if (flags->getFlags(ref)) continue;
+
+			unsigned short f = 0;
+			nav->getPolyFlags(ref, &f);
+			if(!(f & SAMPLE_POLYFLAGS_SKYVISIBLE)) continue;
+
+			flags->setFlags(ref, 1);
 		}
 	}
 }
@@ -250,7 +300,27 @@ void NavMeshPruneTool::handleMenu()
 {
 	dtNavMesh* nav = m_sample->getNavMesh();
 	if (!nav) return;
+
+	if(imguiButton("Select sky-accessible polygons"))
+	{
+		if(!m_flags)
+		{
+			m_flags = new NavmeshFlags();
+			m_flags->init(nav);
+		}
+		visitSkyAccessiblePolys(nav, m_flags);
+	}
+
 	if (!m_flags) return;
+
+	char selectionInfo[512];
+	snprintf(selectionInfo, 512, "%i polys selected", m_flags->count(1));
+	imguiLabel(selectionInfo);
+
+	if (imguiButton("Flood fill from selected"))
+	{
+		floodFromSelected(nav, m_flags);
+	}
 
 	if (imguiButton("Clear Selection"))
 	{
@@ -283,6 +353,8 @@ void NavMeshPruneTool::handleMenu()
 		}
 	}
 	}
+
+	
 }
 
 void NavMeshPruneTool::handleClick(const float* s, const float* p, bool shift)

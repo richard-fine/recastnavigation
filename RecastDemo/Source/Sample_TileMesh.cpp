@@ -67,6 +67,36 @@ inline unsigned int ilog2(unsigned int v)
 	return r;
 }
 
+void markSkyVisiblePolygons(rcCompactHeightfield& chf, rcPolyMesh& polyMesh)
+{
+	bool* isSkyVisible = new bool[chf.maxRegions];
+	memset(isSkyVisible, 0, sizeof(bool) * chf.maxRegions);
+
+	for(int iCell = 0; iCell < chf.width * chf.height; ++iCell)
+	{
+		if(chf.cells[iCell].count == 0) continue;
+
+		int topmostSpan = 0;
+		for(int span = 1; span < chf.cells[iCell].count; ++span)
+		{
+			if(chf.spans[chf.cells[iCell].index + span].y > chf.spans[chf.cells[iCell].index + topmostSpan].y)
+				topmostSpan = span;
+		}
+
+		int regionId = chf.spans[chf.cells[iCell].index + topmostSpan].reg;
+
+		isSkyVisible[regionId & ~RC_BORDER_REG] = true;
+	}
+
+	for(int iPoly = 0; iPoly < polyMesh.npolys; ++iPoly)
+	{
+		if(!isSkyVisible[polyMesh.regs[iPoly] & ~RC_BORDER_REG]) continue;
+		polyMesh.flags[iPoly] |= SAMPLE_POLYFLAGS_SKYVISIBLE;
+	}
+
+	delete[] isSkyVisible;
+}
+
 void rcFilterCrawlableSpans(rcContext* ctx, int walkableHeight, int crawlableHeight, rcHeightfield& solid)
 {
 	ctx->startTimer(RC_TIMER_FILTER_WALKABLE);
@@ -1192,6 +1222,9 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not triangulate contours.");
 		return 0;
 	}
+
+	// Mark sky-visible polygons, so we can easily flood-fill connectivity later
+	markSkyVisiblePolygons(*m_chf, *m_pmesh);
 	
 	// Build detail mesh.
 	m_dmesh = rcAllocPolyMeshDetail();
@@ -1238,19 +1271,19 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_GRASS ||
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_ROAD)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_CRAWL;
+				m_pmesh->flags[i] |= SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_CRAWL;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_CRAWL)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_CRAWL;
+				m_pmesh->flags[i] |= SAMPLE_POLYFLAGS_CRAWL;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_WATER)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_SWIM;
+				m_pmesh->flags[i] |= SAMPLE_POLYFLAGS_SWIM;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DOOR)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR | SAMPLE_POLYFLAGS_CRAWL;
+				m_pmesh->flags[i] |= SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR | SAMPLE_POLYFLAGS_CRAWL;
 			}
 		}
 		
