@@ -607,7 +607,7 @@ private:
 	/// Returns all polygons in neighbour tile based on portal defined by the segment.
 	int findConnectingPolys(const float* va, const float* vb,
 							const dtMeshTile* tile, int side,
-							dtPolyRef* con, float* conarea, int maxcon) const;
+							dtPolyRef* con, float* conarea, int maxcon, int srcArea) const;
 	
 	/// Builds internal polygons links for a tile.
 	void connectIntLinks(dtMeshTile* tile);

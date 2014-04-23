@@ -299,7 +299,7 @@ const dtNavMeshParams* dtNavMesh::getParams() const
 //////////////////////////////////////////////////////////////////////////////////////////
 int dtNavMesh::findConnectingPolys(const float* va, const float* vb,
 								   const dtMeshTile* tile, int side,
-								   dtPolyRef* con, float* conarea, int maxcon) const
+								   dtPolyRef* con, float* conarea, int maxcon, int srcArea) const
 {
 	if (!tile) return 0;
 	
@@ -317,6 +317,7 @@ int dtNavMesh::findConnectingPolys(const float* va, const float* vb,
 	for (int i = 0; i < tile->header->polyCount; ++i)
 	{
 		dtPoly* poly = &tile->polys[i];
+        if(poly->getArea() != srcArea) continue;
 		const int nv = poly->vertCount;
 		for (int j = 0; j < nv; ++j)
 		{
@@ -335,6 +336,15 @@ int dtNavMesh::findConnectingPolys(const float* va, const float* vb,
 			calcSlabEndPoints(vc,vd, bmin,bmax, side);
 			
 			if (!overlapSlabs(amin,amax, bmin,bmax, 0.01f, tile->header->walkableClimb)) continue;
+            
+            // If the edge matches /perfectly/, don't return any other connections
+            if(dtVdist(va, vc) < 0.01f && dtVdist(vb, vd) < 0.01f)
+            {
+                conarea[0] = dtMax(amin[0], bmin[0]);
+                conarea[1] = dtMin(amax[0], bmax[0]);
+                con[0] = base | (dtPolyRef)i;
+                return 1;
+            }
 			
 			// Add return value.
 			if (n < maxcon)
@@ -413,7 +423,7 @@ void dtNavMesh::connectExtLinks(dtMeshTile* tile, dtMeshTile* target, int side)
 			const float* vb = &tile->verts[poly->verts[(j+1) % nv]*3];
 			dtPolyRef nei[4];
 			float neia[4*2];
-			int nnei = findConnectingPolys(va,vb, target, dtOppositeTile(dir), nei,neia,4);
+			int nnei = findConnectingPolys(va,vb, target, dtOppositeTile(dir), nei,neia,4,poly->getArea());
 			for (int k = 0; k < nnei; ++k)
 			{
 				unsigned int idx = allocLink(tile);
