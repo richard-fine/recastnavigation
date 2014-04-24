@@ -178,6 +178,31 @@ public:
 	}
 };
 
+static void pruneDeadTiles(dtNavMesh* nav)
+{
+    // Remove all tiles that are either empty or that have only DISABLED polygons in
+    for(int i = nav->getMaxTiles() - 1; i >= 0; --i)
+	{
+        const dtMeshTile* tile = ((const dtNavMesh*)nav)->getTile(i);
+		if (!tile->header) continue;
+        
+        const dtPolyRef base = nav->getPolyRefBase(tile);
+        bool anyPolysEnabled = false;
+        for (int j = 0; !anyPolysEnabled && j < tile->header->polyCount; ++j)
+        {
+            const dtPolyRef ref = base | (unsigned int)j;
+            unsigned short f = 0;
+            nav->getPolyFlags(ref, &f);
+            if(!(f & SAMPLE_POLYFLAGS_DISABLED))
+                anyPolysEnabled = true;
+        }
+        if(anyPolysEnabled)
+            continue;
+        
+        nav->removeTile(nav->getTileRef(tile), 0, 0);
+	}
+}
+
 static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, unsigned char flag, unsigned short includingFlags, unsigned short excludingFlags)
 {
 	// If already visited, skip.
@@ -413,6 +438,11 @@ void NavMeshPruneTool::handleMenu()
 		m_floodExcludingFlags ^= SAMPLE_POLYFLAGS_DISABLED;
 	}
 	imguiUnindent();
+    
+    if(imguiButton("Prune dead tiles"))
+    {
+        pruneDeadTiles(nav);
+    }
 
 	if(imguiButton("Select sky-accessible polygons"))
 	{
