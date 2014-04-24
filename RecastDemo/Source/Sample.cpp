@@ -121,19 +121,19 @@ const float* Sample::getBoundsMax()
 
 void Sample::resetCommonSettings()
 {
-	m_cellSize = 0.3f;
-	m_cellHeight = 0.2f;
-	m_agentHeight = 2.0f;
-	m_crawlHeight = 0.8f;
-	m_agentRadius = 0.6f;
-	m_agentMaxClimb = 0.9f;
-	m_agentMaxSlope = 45.0f;
+	m_cellSize = 0.01f;
+	m_cellHeight = 0.01f;
+	m_agentHeight = 1.8f;
+	m_crawlHeight = 0.3f;
+	m_agentRadius = 0.4f;
+	m_agentMaxClimb = 0.5f;
+	m_agentMaxSlope = 55.0f;
 	m_regionMinSize = 8;
 	m_regionMergeSize = 20;
 	m_edgeMaxLen = 12.0f;
 	m_edgeMaxError = 1.3f;
 	m_vertsPerPoly = 6.0f;
-	m_detailSampleDist = 6.0f;
+	m_detailSampleDist = 4.0f;
 	m_detailSampleMaxError = 1.0f;
 	m_partitionType = SAMPLE_PARTITION_WATERSHED;
 }
