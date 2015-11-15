@@ -259,7 +259,6 @@ void NavMeshTesterTool::init(Sample* sample)
 		m_filter.setAreaCost(SAMPLE_POLYAREA_WATER, 10.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_ROAD, 1.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_DOOR, 1.0f);
-		m_filter.setAreaCost(SAMPLE_POLYAREA_GRASS, 2.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_JUMP, 1.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_CRAWL, 1.5f);
 	}

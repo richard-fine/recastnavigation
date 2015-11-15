@@ -100,7 +100,7 @@ static int pointInPoly(int nvert, const float* verts, const float* p)
 
 ConvexVolumeTool::ConvexVolumeTool() :
 	m_sample(0),
-	m_areaType(SAMPLE_POLYAREA_GRASS),
+	m_areaType(SAMPLE_POLYAREA_GROUND),
 	m_polyOffset(0.0f),
 	m_boxHeight(6.0f),
 	m_boxDescent(1.0f),
@@ -134,8 +134,8 @@ void ConvexVolumeTool::handleMenu()
 
 	imguiLabel("Area Type");
 	imguiIndent();
-	if (imguiCheck("Grass", m_areaType == SAMPLE_POLYAREA_GRASS))
-		m_areaType = SAMPLE_POLYAREA_GRASS;
+	if (imguiCheck("Disabled", m_areaType == SAMPLE_POLYAREA_DISABLED))
+		m_areaType = SAMPLE_POLYAREA_DISABLED;
 	if (imguiCheck("Road", m_areaType == SAMPLE_POLYAREA_ROAD))
 		m_areaType = SAMPLE_POLYAREA_ROAD;
 	if (imguiCheck("Water", m_areaType == SAMPLE_POLYAREA_WATER))

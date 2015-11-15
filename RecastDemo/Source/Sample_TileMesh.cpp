@@ -1313,7 +1313,6 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 				m_pmesh->areas[i] = SAMPLE_POLYAREA_GROUND;
 			
 			if (m_pmesh->areas[i] == SAMPLE_POLYAREA_GROUND ||
-				m_pmesh->areas[i] == SAMPLE_POLYAREA_GRASS ||
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_ROAD)
 			{
 				m_pmesh->flags[i] |= SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_CRAWL;
@@ -1329,6 +1328,10 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DOOR)
 			{
 				m_pmesh->flags[i] |= SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR | SAMPLE_POLYFLAGS_CRAWL;
+			}
+			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DISABLED)
+			{
+				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_DISABLED;
 			}
 		}
 		

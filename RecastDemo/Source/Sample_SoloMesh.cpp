@@ -638,7 +638,6 @@ bool Sample_SoloMesh::handleBuild()
 				m_pmesh->areas[i] = SAMPLE_POLYAREA_GROUND;
 				
 			if (m_pmesh->areas[i] == SAMPLE_POLYAREA_GROUND ||
-				m_pmesh->areas[i] == SAMPLE_POLYAREA_GRASS ||
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_ROAD)
 			{
 				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK;
@@ -650,6 +649,10 @@ bool Sample_SoloMesh::handleBuild()
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DOOR)
 			{
 				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR;
+			}
+			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DISABLED)
+			{
+				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_DISABLED;
 			}
 		}
 

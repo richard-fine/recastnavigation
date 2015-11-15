@@ -194,7 +194,6 @@ struct MeshProcess : public dtTileCacheMeshProcess
 				polyAreas[i] = SAMPLE_POLYAREA_GROUND;
 
 			if (polyAreas[i] == SAMPLE_POLYAREA_GROUND ||
-				polyAreas[i] == SAMPLE_POLYAREA_GRASS ||
 				polyAreas[i] == SAMPLE_POLYAREA_ROAD)
 			{
 				polyFlags[i] = SAMPLE_POLYFLAGS_WALK;
@@ -206,6 +205,10 @@ struct MeshProcess : public dtTileCacheMeshProcess
 			else if (polyAreas[i] == SAMPLE_POLYAREA_DOOR)
 			{
 				polyFlags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR;
+			}
+			else if (polyAreas[i] == SAMPLE_POLYAREA_DISABLED)
+			{
+				polyFlags[i] = SAMPLE_POLYFLAGS_DISABLED;
 			}
 		}
 
