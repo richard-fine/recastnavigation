@@ -31,6 +31,12 @@ struct ConvexVolume
 	int area;
 };
 
+struct SolidVolume
+{
+	int nverts;
+	float* verts;
+};
+
 class InputGeom
 {
 	rcChunkyTriMesh* m_chunkyMesh;
@@ -56,6 +62,9 @@ class InputGeom
 	int m_volumeCount;
 	///@}
 	
+	SolidVolume* m_solids;
+	int m_solidsCount;
+
 public:
 	InputGeom();
 	~InputGeom();
@@ -99,6 +108,10 @@ public:
 
 	void loadConvexVolumesFromFile(const char* filepath);
 	///@}
+
+	int getSolidVolumeCount() const { return m_solidsCount; }
+	const SolidVolume* getSolidVolumes() const { return m_solids; }
+	void loadSolidVolumesFromFile(const char* filepath);
 };
 
 #endif // INPUTGEOM_H

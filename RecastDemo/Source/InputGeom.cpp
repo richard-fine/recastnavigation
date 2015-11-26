@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <vector>
 #include "Recast.h"
 #include "InputGeom.h"
 #include "ChunkyTriMesh.h"
@@ -110,7 +111,9 @@ InputGeom::InputGeom() :
 	m_chunkyMesh(0),
 	m_mesh(0),
 	m_offMeshConCount(0),
-	m_volumeCount(0)
+	m_volumeCount(0),
+	m_solidsCount(0),
+	m_solids(0)
 {
 }
 
@@ -118,6 +121,9 @@ InputGeom::~InputGeom()
 {
 	delete m_chunkyMesh;
 	delete m_mesh;
+	for (int i = 0; i < m_solidsCount; ++i)
+		delete m_solids[i].verts;
+	delete m_solids;
 }
 		
 bool InputGeom::loadMesh(rcContext* ctx, const char* filepath)
@@ -179,6 +185,17 @@ bool InputGeom::loadMesh(rcContext* ctx, const char* filepath)
         fclose(lfp);
         loadJumpLinksFromFile(linkFileName);
     }
+
+	char solidsFileName[4096];
+	strcpy(solidsFileName, filepath);
+	strcat(solidsFileName, ".solids.txt");
+
+	FILE* sfp = fopen(solidsFileName, "r");
+	if (sfp != NULL)
+	{
+		fclose(sfp);
+		loadSolidVolumesFromFile(solidsFileName);
+	}
 
 	return true;
 }
@@ -592,4 +609,31 @@ void InputGeom::loadJumpLinksFromFile(const char* filePath)
     }
     
     fclose(fp);
+}
+
+void InputGeom::loadSolidVolumesFromFile(const char* filePath)
+{
+	FILE* fp = fopen(filePath, "r");
+
+	std::vector<SolidVolume> solids;
+
+	char buf[4096];
+	while (fgets(buf, 4096, fp) != NULL)
+	{
+		char* token = strtok(buf, ",");
+		SolidVolume v;
+		v.nverts = atoi(token);
+		v.verts = new float[3 * v.nverts];
+		for (int i = 0; i < 3 * v.nverts; ++i)
+		{
+			token = strtok(NULL, ",");
+			v.verts[i] = (float)atof(token);
+		}
+
+		solids.push_back(v);
+	}
+
+	m_solidsCount = solids.size();
+	m_solids = new SolidVolume[m_solidsCount];
+	memcpy(m_solids, &solids[0], sizeof(SolidVolume) * m_solidsCount);
 }
