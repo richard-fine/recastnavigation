@@ -617,8 +617,8 @@ void InputGeom::loadSolidVolumesFromFile(const char* filePath)
 
 	std::vector<SolidVolume> solids;
 
-	char buf[4096];
-	while (fgets(buf, 4096, fp) != NULL)
+	char buf[4096 * 32];
+	while (fgets(buf, 4096 * 32, fp) != NULL)
 	{
 		char* token = strtok(buf, ",");
 		SolidVolume v;
