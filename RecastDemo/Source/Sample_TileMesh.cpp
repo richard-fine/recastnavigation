@@ -1125,7 +1125,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	const SolidVolume* sv = m_geom->getSolidVolumes();
 	for (int i = 0; i < m_geom->getSolidVolumeCount(); ++i)
 	{
-		rcRasterizeFilledConvexVolume(m_ctx, sv[i].verts, sv[i].nverts, RC_WALKABLE_AREA, *m_solid);
+		rcRasterizeFilledConvexVolume(m_ctx, sv[i].verts, sv[i].nverts, sv[i].area, *m_solid);
 	}
 	
 	if (!m_keepInterResults)

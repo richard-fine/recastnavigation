@@ -620,9 +620,13 @@ void InputGeom::loadSolidVolumesFromFile(const char* filePath)
 	char buf[4096 * 32];
 	while (fgets(buf, 4096 * 32, fp) != NULL)
 	{
+		if (buf[0] == '#') continue;
+
 		char* token = strtok(buf, ",");
 		SolidVolume v;
 		v.nverts = atoi(token);
+		token = strtok(NULL, ",");
+		v.area = atoi(token);
 		v.verts = new float[3 * v.nverts];
 		for (int i = 0; i < 3 * v.nverts; ++i)
 		{
@@ -632,6 +636,8 @@ void InputGeom::loadSolidVolumesFromFile(const char* filePath)
 
 		solids.push_back(v);
 	}
+
+	fclose(fp);
 
 	m_solidsCount = solids.size();
 	m_solids = new SolidVolume[m_solidsCount];

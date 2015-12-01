@@ -34,6 +34,7 @@ struct ConvexVolume
 struct SolidVolume
 {
 	int nverts;
+	int area;
 	float* verts;
 };
 
